@@ -127,14 +127,26 @@ public class LoadTestExecutor {
                         metricsCollector.recordResponse(responseTime, false);
                         requestCounter.incrementAndGet();
                     }
+                    
+                    // Apply configured delay between requests
+                    if (config.getDelayMs() > 0) {
+                        try {
+                            Thread.sleep(config.getDelayMs());
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
                 }
                 
-                // Small delay to prevent overwhelming the system
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
+                // Small delay to prevent overwhelming the system if no delay configured
+                if (config.getDelayMs() == 0) {
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
                 }
             }
         }

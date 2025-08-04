@@ -8,12 +8,14 @@ public class TestConfiguration {
     private final int users;
     private final int threads;
     private final int durationSeconds;
+    private final int delayMs;
     
-    public TestConfiguration(String endpoint, int users, int threads, int durationSeconds) {
+    public TestConfiguration(String endpoint, int users, int threads, int durationSeconds, int delayMs) {
         this.endpoint = endpoint;
         this.users = users;
         this.threads = threads;
         this.durationSeconds = durationSeconds;
+        this.delayMs = delayMs;
     }
     
     public String getEndpoint() {
@@ -34,5 +36,9 @@ public class TestConfiguration {
     
     public long getDurationMillis() {
         return durationSeconds * 1000L;
+    }
+    
+    public int getDelayMs() {
+        return delayMs;
     }
 }

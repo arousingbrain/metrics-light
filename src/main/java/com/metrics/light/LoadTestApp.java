@@ -35,6 +35,7 @@ public class LoadTestApp {
             System.out.println("  Users: " + config.getUsers());
             System.out.println("  Threads: " + config.getThreads());
             System.out.println("  Duration: " + config.getDurationSeconds() + " seconds");
+            System.out.println("  Delay: " + config.getDelayMs() + " ms");
             System.out.println();
             
             LoadTestExecutor executor = new LoadTestExecutor(config);
@@ -85,6 +86,12 @@ public class LoadTestApp {
                 .desc("Test duration in seconds")
                 .build());
                 
+        options.addOption(Option.builder("r")
+                .longOpt("delay")
+                .hasArg()
+                .desc("Delay between requests in milliseconds (default: 0)")
+                .build());
+                
         options.addOption(Option.builder("h")
                 .longOpt("help")
                 .desc("Show help")
@@ -98,8 +105,9 @@ public class LoadTestApp {
         int users = Integer.parseInt(cmd.getOptionValue("u"));
         int threads = Integer.parseInt(cmd.getOptionValue("t"));
         int duration = Integer.parseInt(cmd.getOptionValue("d"));
+        int delay = cmd.hasOption("r") ? Integer.parseInt(cmd.getOptionValue("r")) : 0;
         
-        return new TestConfiguration(endpoint, users, threads, duration);
+        return new TestConfiguration(endpoint, users, threads, duration, delay);
     }
     
     private static void validateConfiguration(TestConfiguration config) {
@@ -112,6 +120,9 @@ public class LoadTestApp {
         if (config.getDurationSeconds() <= 0) {
             throw new IllegalArgumentException("Duration must be positive");
         }
+        if (config.getDelayMs() < 0) {
+            throw new IllegalArgumentException("Delay must be non-negative");
+        }
         if (config.getThreads() > config.getUsers()) {
             throw new IllegalArgumentException("Number of threads cannot exceed number of users");
         }
@@ -122,6 +133,6 @@ public class LoadTestApp {
         formatter.printHelp("java -jar metrics-light.jar", 
                 "Lightweight load testing application\n\n", 
                 options, 
-                "\nExample: java -jar metrics-light.jar -e http://localhost:8080/api/test -u 100 -t 10 -d 60");
+                "\nExample: java -jar metrics-light.jar -e http://localhost:8080/api/test -u 100 -t 10 -d 60 -r 100");
     }
 }

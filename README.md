@@ -43,7 +43,7 @@ The standalone JAR will be created at `target/metrics-light-1.0.0.jar`
 ## Usage
 
 ```bash
-java -jar target/metrics-light-1.0.0.jar -e <endpoint> -u <users> -t <threads> -d <duration>
+java -jar target/metrics-light-1.0.0.jar -e <endpoint> -u <users> -t <threads> -d <duration> [-r <delay>]
 ```
 
 ### Parameters
@@ -52,6 +52,7 @@ java -jar target/metrics-light-1.0.0.jar -e <endpoint> -u <users> -t <threads> -
 - `-u, --users`: Number of concurrent users (required)
 - `-t, --threads`: Number of threads (required)
 - `-d, --duration`: Test duration in seconds (required)
+- `-r, --delay`: Delay between requests in milliseconds (optional, default: 0)
 - `-h, --help`: Show help message
 
 ### Examples
@@ -66,9 +67,14 @@ java -jar target/metrics-light-1.0.0.jar -e http://httpbin.org/get -u 10 -t 2 -d
 java -jar target/metrics-light-1.0.0.jar -e https://jsonplaceholder.typicode.com/posts/1 -u 100 -t 10 -d 60
 ```
 
+**Load test with delay (100ms between requests):**
+```bash
+java -jar target/metrics-light-1.0.0.jar -e http://httpbin.org/get -u 20 -t 4 -d 60 -r 100
+```
+
 **Local application test:**
 ```bash
-java -jar target/metrics-light-1.0.0.jar -e http://localhost:8080/api/health -u 50 -t 5 -d 120
+java -jar target/metrics-light-1.0.0.jar -e http://localhost:8080/api/health -u 50 -t 5 -d 120 -r 50
 ```
 
 ## Sample Output
@@ -79,6 +85,7 @@ Starting load test with configuration:
   Users: 10
   Threads: 2
   Duration: 30 seconds
+  Delay: 0 ms
 
 Requests sent: 245
 Requests sent: 489
@@ -123,6 +130,10 @@ The application consists of several key components:
 - **Users vs Threads**: Number of threads should not exceed number of users
 - **Thread Count**: Start with CPU cores × 2, adjust based on target system
 - **Duration**: Allow sufficient time for meaningful statistics (minimum 30 seconds recommended)
+- **Delay**: Use to control request rate and avoid overwhelming the target system
+  - `0 ms` (default): Maximum possible request rate
+  - `100-500 ms`: Moderate load testing
+  - `1000+ ms`: Slow, sustained load testing
 - **Endpoint**: Ensure the target endpoint can handle the expected load
 
 ## Limitations
