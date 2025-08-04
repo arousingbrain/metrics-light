@@ -13,7 +13,7 @@ public class CurlCommandParser {
     // Pattern for extracting URL from curl command (currently using manual parsing)
     private static final Pattern METHOD_PATTERN = Pattern.compile("-X\\s+([A-Z]+)");
     private static final Pattern HEADER_PATTERN = Pattern.compile("-H\\s+['\"]([^'\"]+)['\"]");
-    private static final Pattern DATA_PATTERN = Pattern.compile("-d\\s+['\"]([^'\"]+)['\"]");
+    private static final Pattern DATA_PATTERN = Pattern.compile("(?:-d|--data|--data-raw)\\s+(['\"])([^'\"]*(?:\\\\.[^'\"]*)*?)\\1");
     
     public static RequestDetails parse(String curlCommand) {
         if (curlCommand == null || curlCommand.trim().isEmpty()) {
@@ -108,10 +108,20 @@ public class CurlCommandParser {
     }
     
     private static String extractBody(String curlCommand) {
-        Matcher matcher = DATA_PATTERN.matcher(curlCommand);
-        if (matcher.find()) {
-            return matcher.group(1);
+        // Try multiple patterns for different curl data flag formats
+        String[] patterns = {
+            "(?:-d|--data|--data-raw)\\s+'([^']*)'",      // Single quotes
+            "(?:-d|--data|--data-raw)\\s+\"([^\"]*)\""     // Double quotes
+        };
+        
+        for (String patternStr : patterns) {
+            Pattern pattern = Pattern.compile(patternStr);
+            Matcher matcher = pattern.matcher(curlCommand);
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
         }
+        
         return null;
     }
 }

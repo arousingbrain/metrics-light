@@ -14,6 +14,7 @@ public class LoadTestExecutor {
     private final AtomicBoolean shouldStop;
     private final AtomicLong requestCounter;
     private final RequestDetails requestDetails;
+    private final AtomicBoolean firstExceptionShown;
     
     public LoadTestExecutor(TestConfiguration config) {
         this.config = config;
@@ -21,6 +22,7 @@ public class LoadTestExecutor {
         this.httpSender = new HttpRequestSender();
         this.shouldStop = new AtomicBoolean(false);
         this.requestCounter = new AtomicLong(0);
+        this.firstExceptionShown = new AtomicBoolean(false);
         
         // Parse curl command once at startup (without UUID replacement for display)
         this.requestDetails = CurlCommandParser.parse(config.getCurlCommand());
@@ -139,6 +141,22 @@ public class LoadTestExecutor {
                         
                         metricsCollector.recordResponse(responseTime, false);
                         requestCounter.incrementAndGet();
+                        
+                        // Show the first exception for debugging purposes
+                        if (firstExceptionShown.compareAndSet(false, true)) {
+                            System.err.println("\n=== FIRST REQUEST EXCEPTION (subsequent errors will be suppressed) ===");
+                            System.err.println("Exception Type: " + e.getClass().getSimpleName());
+                            System.err.println("Exception Message: " + e.getMessage());
+                            if (e.getCause() != null) {
+                                System.err.println("Caused by: " + e.getCause().getClass().getSimpleName() + ": " + e.getCause().getMessage());
+                            }
+                            System.err.println("This typically indicates issues with:");
+                            System.err.println("  - Invalid URL in curl.txt");
+                            System.err.println("  - Network connectivity problems");
+                            System.err.println("  - Invalid curl command syntax");
+                            System.err.println("  - Server not responding");
+                            System.err.println("===================================================================\n");
+                        }
                     }
                     
                     // Apply configured delay between requests

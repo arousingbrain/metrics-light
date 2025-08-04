@@ -58,8 +58,8 @@ public class HttpRequestSender {
             return new HttpResponse(statusCode, success);
             
         } catch (Exception e) {
-            // Log error but don't print to avoid spam during load test
-            return new HttpResponse(0, false);
+            // Re-throw exception to allow upper layer error handling
+            throw e;
         }
     }
     
