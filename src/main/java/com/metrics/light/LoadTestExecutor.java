@@ -13,6 +13,7 @@ public class LoadTestExecutor {
     private final HttpRequestSender httpSender;
     private final AtomicBoolean shouldStop;
     private final AtomicLong requestCounter;
+    private final RequestDetails requestDetails;
     
     public LoadTestExecutor(TestConfiguration config) {
         this.config = config;
@@ -20,6 +21,16 @@ public class LoadTestExecutor {
         this.httpSender = new HttpRequestSender();
         this.shouldStop = new AtomicBoolean(false);
         this.requestCounter = new AtomicLong(0);
+        
+        // Parse curl command once at startup
+        this.requestDetails = CurlCommandParser.parse(config.getCurlCommand());
+        
+        System.out.println("Parsed request details:");
+        System.out.println("  URL: " + requestDetails.getUrl());
+        System.out.println("  Method: " + requestDetails.getMethod());
+        System.out.println("  Headers: " + requestDetails.getHeaders().size() + " header(s)");
+        System.out.println("  Has Body: " + (requestDetails.getBody() != null));
+        System.out.println();
     }
     
     public void execute() throws InterruptedException {
@@ -113,7 +124,7 @@ public class LoadTestExecutor {
                     long startTime = System.nanoTime();
                     
                     try {
-                        HttpResponse response = httpSender.sendRequest(config.getEndpoint());
+                        HttpResponse response = httpSender.sendRequest(requestDetails);
                         long endTime = System.nanoTime();
                         double responseTime = (endTime - startTime) / 1_000_000.0; // Convert to milliseconds
                         

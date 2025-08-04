@@ -15,9 +15,11 @@ public class LoadTestApp {
         
         try {
             // Check for help first, before parsing required options
-            if (args.length > 0 && (args[0].equals("-h") || args[0].equals("--help"))) {
-                printUsage(options);
-                return;
+            for (String arg : args) {
+                if (arg.equals("-h") || arg.equals("--help")) {
+                    printUsage(options);
+                    return;
+                }
             }
             
             CommandLine cmd = parser.parse(options, args);
@@ -31,7 +33,7 @@ public class LoadTestApp {
             validateConfiguration(config);
             
             System.out.println("Starting load test with configuration:");
-            System.out.println("  Endpoint: " + config.getEndpoint());
+            System.out.println("  Curl Command: " + config.getCurlCommand());
             System.out.println("  Users: " + config.getUsers());
             System.out.println("  Threads: " + config.getThreads());
             System.out.println("  Duration: " + config.getDurationSeconds() + " seconds");
@@ -58,11 +60,11 @@ public class LoadTestApp {
     private static Options createOptions() {
         Options options = new Options();
         
-        options.addOption(Option.builder("e")
-                .longOpt("endpoint")
+        options.addOption(Option.builder("c")
+                .longOpt("curl")
                 .hasArg()
                 .required()
-                .desc("Target endpoint URL")
+                .desc("Curl command to execute")
                 .build());
                 
         options.addOption(Option.builder("u")
@@ -101,13 +103,13 @@ public class LoadTestApp {
     }
     
     private static TestConfiguration parseConfiguration(CommandLine cmd) {
-        String endpoint = cmd.getOptionValue("e");
+        String curlCommand = cmd.getOptionValue("c");
         int users = Integer.parseInt(cmd.getOptionValue("u"));
         int threads = Integer.parseInt(cmd.getOptionValue("t"));
         int duration = Integer.parseInt(cmd.getOptionValue("d"));
         int delay = cmd.hasOption("r") ? Integer.parseInt(cmd.getOptionValue("r")) : 0;
         
-        return new TestConfiguration(endpoint, users, threads, duration, delay);
+        return new TestConfiguration(curlCommand, users, threads, duration, delay);
     }
     
     private static void validateConfiguration(TestConfiguration config) {
@@ -133,6 +135,6 @@ public class LoadTestApp {
         formatter.printHelp("java -jar metrics-light.jar", 
                 "Lightweight load testing application\n\n", 
                 options, 
-                "\nExample: java -jar metrics-light.jar -e http://localhost:8080/api/test -u 100 -t 10 -d 60 -r 100");
+                "\nExample: java -jar metrics-light.jar -c \"curl -X POST http://localhost:8080/api/test -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'\" -u 100 -t 10 -d 60 -r 100");
     }
 }

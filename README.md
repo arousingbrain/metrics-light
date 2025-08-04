@@ -8,6 +8,8 @@ A lightweight Java-based load testing application similar to JMeter that sends H
 - **Comprehensive Metrics**: Captures TPS, percentiles (P75, P90, P99, P99.9, P99.99), and response times
 - **Multi-threaded**: Configurable thread count for concurrent load generation
 - **Real-time Reporting**: Progress updates during test execution
+- **Curl Command Support**: Parse and execute curl commands with headers, body, and different HTTP methods
+- **Auto-Generated Correlation IDs**: Automatically generates unique correlation IDs for each request
 - **Simple CLI**: Easy command-line interface with clear parameters
 
 ## Metrics Captured
@@ -43,12 +45,12 @@ The standalone JAR will be created at `target/metrics-light-1.0.0.jar`
 ## Usage
 
 ```bash
-java -jar target/metrics-light-1.0.0.jar -e <endpoint> -u <users> -t <threads> -d <duration> [-r <delay>]
+java -jar target/metrics-light-1.0.0.jar -c "curl command" -u <users> -t <threads> -d <duration> [-r <delay>]
 ```
 
 ### Parameters
 
-- `-e, --endpoint`: Target endpoint URL (required)
+- `-c, --curl`: Curl command to execute (required)
 - `-u, --users`: Number of concurrent users (required)
 - `-t, --threads`: Number of threads (required)
 - `-d, --duration`: Test duration in seconds (required)
@@ -57,35 +59,41 @@ java -jar target/metrics-light-1.0.0.jar -e <endpoint> -u <users> -t <threads> -
 
 ### Examples
 
-**Basic load test:**
+**Basic GET request:**
 ```bash
-java -jar target/metrics-light-1.0.0.jar -e http://httpbin.org/get -u 10 -t 2 -d 30
+java -jar target/metrics-light-1.0.0.jar -c "curl http://httpbin.org/get" -u 10 -t 2 -d 30
 ```
 
-**Heavy load test:**
+**POST request with headers and body:**
 ```bash
-java -jar target/metrics-light-1.0.0.jar -e https://jsonplaceholder.typicode.com/posts/1 -u 100 -t 10 -d 60
+java -jar target/metrics-light-1.0.0.jar -c "curl -X POST http://httpbin.org/post -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'" -u 50 -t 5 -d 60
 ```
 
-**Load test with delay (100ms between requests):**
+**Request with correlation ID (will be auto-generated for each request):**
 ```bash
-java -jar target/metrics-light-1.0.0.jar -e http://httpbin.org/get -u 20 -t 4 -d 60 -r 100
+java -jar target/metrics-light-1.0.0.jar -c "curl -X POST http://api.example.com/data -H 'one-data-correlation-id: original-value' -H 'Content-Type: application/json' -d '{\"data\":\"test\"}'" -u 20 -t 4 -d 60 -r 100
 ```
 
-**Local application test:**
+**Complex API test with authentication:**
 ```bash
-java -jar target/metrics-light-1.0.0.jar -e http://localhost:8080/api/health -u 50 -t 5 -d 120 -r 50
+java -jar target/metrics-light-1.0.0.jar -c "curl -X PUT http://localhost:8080/api/users/123 -H 'Authorization: Bearer token123' -H 'Content-Type: application/json' -d '{\"name\":\"John\"}'" -u 25 -t 5 -d 120 -r 50
 ```
 
 ## Sample Output
 
 ```
 Starting load test with configuration:
-  Endpoint: http://httpbin.org/get
+  Curl Command: curl -X POST http://httpbin.org/post -H 'Content-Type: application/json' -d '{"key":"value"}'
   Users: 10
   Threads: 2
   Duration: 30 seconds
   Delay: 0 ms
+
+Parsed request details:
+  URL: http://httpbin.org/post
+  Method: POST
+  Headers: 1 header(s)
+  Has Body: true
 
 Requests sent: 245
 Requests sent: 489
@@ -123,7 +131,17 @@ The application consists of several key components:
 - **LoadTestExecutor**: Orchestrates the load test execution
 - **MetricsCollector**: Collects and calculates performance statistics
 - **HttpRequestSender**: Handles HTTP requests with connection pooling
+- **CurlCommandParser**: Parses curl commands to extract request details
+- **RequestDetails**: Holds parsed request information with correlation ID generation
 - **TestConfiguration**: Configuration data holder
+
+## Curl Command Support
+
+The application parses curl commands to extract:
+- **HTTP Method**: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
+- **Headers**: All `-H` or `--header` flags
+- **Request Body**: Data from `-d` or `--data` flags
+- **Special Correlation ID**: Automatically replaces `one-data-correlation-id` header values with `CSSLOADTEST{uuid}` where `{uuid}` is the first 6 characters of a generated UUID for each request
 
 ## Configuration Guidelines
 
@@ -138,10 +156,10 @@ The application consists of several key components:
 
 ## Limitations
 
-- Currently supports only GET requests
-- No authentication mechanisms built-in
-- No custom headers or request body support
+- Curl command parsing supports basic syntax (single quotes, double quotes, basic flags)
+- Complex curl features (file uploads, advanced authentication, cookies) not fully supported
 - Designed for HTTP/HTTPS endpoints only
+- No support for curl config files or environment variables
 
 ## License
 

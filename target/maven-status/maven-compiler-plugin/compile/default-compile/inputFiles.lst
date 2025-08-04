@@ -1,7 +1,9 @@
 /Users/osoto/projects/metrics-light/src/main/java/com/metrics/light/MetricsReport.java
 /Users/osoto/projects/metrics-light/src/main/java/com/metrics/light/MetricsCollector.java
+/Users/osoto/projects/metrics-light/src/main/java/com/metrics/light/RequestDetails.java
 /Users/osoto/projects/metrics-light/src/main/java/com/metrics/light/HttpRequestSender.java
 /Users/osoto/projects/metrics-light/src/main/java/com/metrics/light/TestConfiguration.java
 /Users/osoto/projects/metrics-light/src/main/java/com/metrics/light/HttpResponse.java
+/Users/osoto/projects/metrics-light/src/main/java/com/metrics/light/CurlCommandParser.java
 /Users/osoto/projects/metrics-light/src/main/java/com/metrics/light/LoadTestApp.java
 /Users/osoto/projects/metrics-light/src/main/java/com/metrics/light/LoadTestExecutor.java
