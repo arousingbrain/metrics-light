@@ -49,10 +49,7 @@ public class HttpRequestSender {
     }
     
     public HttpResponse sendRequest(RequestDetails requestDetails) throws Exception {
-        // Create fresh request details with new correlation ID for each request
-        RequestDetails freshRequest = requestDetails.withFreshCorrelationId();
-        
-        ClassicHttpRequest request = createHttpRequest(freshRequest);
+        ClassicHttpRequest request = createHttpRequest(requestDetails);
         
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             int statusCode = response.getCode();

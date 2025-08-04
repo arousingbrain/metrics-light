@@ -33,7 +33,7 @@ public class LoadTestApp {
             validateConfiguration(config);
             
             System.out.println("Starting load test with configuration:");
-            System.out.println("  Curl Command: " + config.getCurlCommand());
+            System.out.println("  Curl Command (from curl.txt): " + config.getCurlCommand());
             System.out.println("  Users: " + config.getUsers());
             System.out.println("  Threads: " + config.getThreads());
             System.out.println("  Duration: " + config.getDurationSeconds() + " seconds");
@@ -60,12 +60,7 @@ public class LoadTestApp {
     private static Options createOptions() {
         Options options = new Options();
         
-        options.addOption(Option.builder("c")
-                .longOpt("curl")
-                .hasArg()
-                .required()
-                .desc("Curl command to execute")
-                .build());
+        // Curl command will be read from curl.txt file
                 
         options.addOption(Option.builder("u")
                 .longOpt("users")
@@ -102,14 +97,32 @@ public class LoadTestApp {
         return options;
     }
     
-    private static TestConfiguration parseConfiguration(CommandLine cmd) {
-        String curlCommand = cmd.getOptionValue("c");
+    private static TestConfiguration parseConfiguration(CommandLine cmd) throws Exception {
+        String curlCommand = readCurlCommandFromFile();
         int users = Integer.parseInt(cmd.getOptionValue("u"));
         int threads = Integer.parseInt(cmd.getOptionValue("t"));
         int duration = Integer.parseInt(cmd.getOptionValue("d"));
         int delay = cmd.hasOption("r") ? Integer.parseInt(cmd.getOptionValue("r")) : 0;
         
         return new TestConfiguration(curlCommand, users, threads, duration, delay);
+    }
+    
+    private static String readCurlCommandFromFile() throws Exception {
+        java.nio.file.Path curlFile = java.nio.file.Paths.get("curl.txt");
+        
+        if (!java.nio.file.Files.exists(curlFile)) {
+            throw new IllegalArgumentException("curl.txt file not found in current directory");
+        }
+        
+        try {
+            String content = java.nio.file.Files.readString(curlFile).trim();
+            if (content.isEmpty()) {
+                throw new IllegalArgumentException("curl.txt file is empty");
+            }
+            return content;
+        } catch (java.io.IOException e) {
+            throw new Exception("Error reading curl.txt file: " + e.getMessage());
+        }
     }
     
     private static void validateConfiguration(TestConfiguration config) {
@@ -133,8 +146,11 @@ public class LoadTestApp {
     private static void printUsage(Options options) {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("java -jar metrics-light.jar", 
-                "Lightweight load testing application\n\n", 
+                "Lightweight load testing application\n\n" +
+                "The curl command should be placed in a file named 'curl.txt' in the current directory.\n\n", 
                 options, 
-                "\nExample: java -jar metrics-light.jar -c \"curl -X POST http://localhost:8080/api/test -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'\" -u 100 -t 10 -d 60 -r 100");
+                "\nExample: java -jar metrics-light.jar -u 100 -t 10 -d 60 -r 100\n" +
+                "Make sure curl.txt contains your curl command, e.g.:\n" +
+                "curl -X POST http://localhost:8080/api/test -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'");
     }
 }

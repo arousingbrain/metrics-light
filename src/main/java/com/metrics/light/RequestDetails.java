@@ -2,7 +2,6 @@ package com.metrics.light;
 
 import java.util.Map;
 import java.util.HashMap;
-import java.util.UUID;
 
 /**
  * Contains details extracted from a curl command for HTTP requests.
@@ -18,33 +17,6 @@ public class RequestDetails {
         this.method = method;
         this.headers = new HashMap<>(headers);
         this.body = body;
-        
-        // Handle special correlation ID header
-        processCorrelationId();
-    }
-    
-    private void processCorrelationId() {
-        // Look for the correlation ID header (case-insensitive)
-        String correlationKey = null;
-        for (String key : headers.keySet()) {
-            if ("one-data-correlation-id".equalsIgnoreCase(key)) {
-                correlationKey = key;
-                break;
-            }
-        }
-        
-        // If found, replace with unique value for each request
-        if (correlationKey != null) {
-            String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
-            headers.put(correlationKey, "CSSLOADTEST" + uuid);
-        }
-    }
-    
-    /**
-     * Creates a new RequestDetails with a fresh correlation ID for each request.
-     */
-    public RequestDetails withFreshCorrelationId() {
-        return new RequestDetails(url, method, headers, body);
     }
     
     public String getUrl() {

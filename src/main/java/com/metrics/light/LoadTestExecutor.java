@@ -22,7 +22,7 @@ public class LoadTestExecutor {
         this.shouldStop = new AtomicBoolean(false);
         this.requestCounter = new AtomicLong(0);
         
-        // Parse curl command once at startup
+        // Parse curl command once at startup (without UUID replacement for display)
         this.requestDetails = CurlCommandParser.parse(config.getCurlCommand());
         
         System.out.println("Parsed request details:");
@@ -124,7 +124,9 @@ public class LoadTestExecutor {
                     long startTime = System.nanoTime();
                     
                     try {
-                        HttpResponse response = httpSender.sendRequest(requestDetails);
+                        // Generate fresh request with UUID replacement for each request
+                        RequestDetails freshRequest = CurlCommandParser.parseWithUuidReplacement(config.getCurlCommand());
+                        HttpResponse response = httpSender.sendRequest(freshRequest);
                         long endTime = System.nanoTime();
                         double responseTime = (endTime - startTime) / 1_000_000.0; // Convert to milliseconds
                         

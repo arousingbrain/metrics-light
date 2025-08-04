@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 /**
  * Parses curl commands to extract HTTP method, URL, headers, and request body.
+ * Supports {uuid} token replacement with generated correlation IDs.
  */
 public class CurlCommandParser {
     
@@ -23,6 +24,30 @@ public class CurlCommandParser {
         String method = extractMethod(curlCommand);
         Map<String, String> headers = extractHeaders(curlCommand);
         String body = extractBody(curlCommand);
+        
+        return new RequestDetails(url, method, headers, body);
+    }
+    
+    /**
+     * Creates a RequestDetails with {uuid} tokens replaced with generated correlation IDs.
+     */
+    public static RequestDetails parseWithUuidReplacement(String curlCommand) {
+        if (curlCommand == null || curlCommand.trim().isEmpty()) {
+            throw new IllegalArgumentException("Curl command cannot be null or empty");
+        }
+        
+        // Generate unique UUID for this request
+        String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+        String generatedId = "APPLOADID" + uuid;
+        
+        // Replace all {uuid} tokens in the curl command
+        String processedCommand = curlCommand.replace("{uuid}", generatedId);
+        
+        // Parse the processed command
+        String url = extractUrl(processedCommand);
+        String method = extractMethod(processedCommand);
+        Map<String, String> headers = extractHeaders(processedCommand);
+        String body = extractBody(processedCommand);
         
         return new RequestDetails(url, method, headers, body);
     }

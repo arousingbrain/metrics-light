@@ -1,0 +1,17 @@
+curl -X PUT http://localhost:8080/api/orders/12345 \
+  -H 'Authorization: Bearer {uuid}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Trace-ID: {uuid}' \
+  -H 'X-Client-Version: 1.0.0' \
+  -d '{
+    "orderId": "{uuid}",
+    "status": "processing",
+    "items": [
+      {"id": 1, "quantity": 2},
+      {"id": 2, "quantity": 1}
+    ],
+    "metadata": {
+      "source": "load-test",
+      "traceId": "{uuid}"
+    }
+  }'

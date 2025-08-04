@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Test examples for Metrics Light with curl command support
+# Test examples for Metrics Light with curl.txt file support
 
-echo "=== Metrics Light - Curl Command Testing Examples ==="
+echo "=== Metrics Light - File-based Curl Command Testing Examples ==="
 echo ""
 
 JAR_FILE="target/metrics-light-1.0.0.jar"
@@ -13,19 +13,28 @@ if [ ! -f "$JAR_FILE" ]; then
 fi
 
 echo "1. Testing basic GET request..."
-java -jar $JAR_FILE -c "curl http://httpbin.org/get" -u 3 -t 1 -d 5
+echo "curl http://httpbin.org/get" > curl.txt
+java -jar $JAR_FILE -u 3 -t 1 -d 5
 
 echo ""
 echo "2. Testing POST request with headers and body..."
-java -jar $JAR_FILE -c "curl -X POST http://httpbin.org/post -H 'Content-Type: application/json' -d '{\"message\":\"test\"}'" -u 2 -t 1 -d 5
+echo "curl -X POST http://httpbin.org/post -H 'Content-Type: application/json' -d '{\"message\":\"test\"}'" > curl.txt
+java -jar $JAR_FILE -u 2 -t 1 -d 5
 
 echo ""
-echo "3. Testing request with correlation ID (will be auto-generated)..."
-java -jar $JAR_FILE -c "curl -X POST http://httpbin.org/post -H 'one-data-correlation-id: original-value' -H 'Content-Type: application/json' -d '{\"correlationTest\":true}'" -u 2 -t 1 -d 5
+echo "3. Testing request with UUID token replacement (will be auto-generated)..."
+cat > curl.txt << 'EOF'
+curl -X POST http://httpbin.org/post -H 'Request-ID: {uuid}' -H 'Content-Type: application/json' -d '{"correlationId":"{uuid}","test":true}'
+EOF
+java -jar $JAR_FILE -u 2 -t 1 -d 5
 
 echo ""
 echo "4. Testing with delay between requests..."
-java -jar $JAR_FILE -c "curl http://httpbin.org/get" -u 2 -t 1 -d 5 -r 500
+echo "curl http://httpbin.org/get" > curl.txt
+java -jar $JAR_FILE -u 2 -t 1 -d 5 -r 500
+
+# Clean up
+rm -f curl.txt
 
 echo ""
 echo "=== All tests completed! ==="

@@ -44,46 +44,97 @@ The standalone JAR will be created at `target/metrics-light-1.0.0.jar`
 
 ## Usage
 
+First, create a `curl.txt` file in your current directory containing the curl command you want to test:
+
 ```bash
-java -jar target/metrics-light-1.0.0.jar -c "curl command" -u <users> -t <threads> -d <duration> [-r <delay>]
+echo "curl -X POST http://api.example.com/data -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'" > curl.txt
+```
+
+Then run the load test:
+
+```bash
+java -jar target/metrics-light-1.0.0.jar -u <users> -t <threads> -d <duration> [-r <delay>]
 ```
 
 ### Parameters
 
-- `-c, --curl`: Curl command to execute (required)
 - `-u, --users`: Number of concurrent users (required)
 - `-t, --threads`: Number of threads (required)
 - `-d, --duration`: Test duration in seconds (required)
 - `-r, --delay`: Delay between requests in milliseconds (optional, default: 0)
 - `-h, --help`: Show help message
 
+### Curl Command File
+
+The application reads the curl command from a file named `curl.txt` in the current directory. This file should contain a single curl command that will be executed for each request.
+
+**File Requirements:**
+- Must be named `curl.txt`
+- Must be in the current working directory
+- Should contain a valid curl command
+- Can span multiple lines using backslashes (`\`)
+- Supports `{uuid}` token replacement anywhere in the command
+
+**Example Files:**
+Check the `examples/` directory for sample curl.txt files:
+- `simple-get.curl.txt` - Basic GET request
+- `post-with-auth.curl.txt` - POST with authentication
+- `complex-api.curl.txt` - Complex multi-line request with JSON
+
 ### Examples
 
 **Basic GET request:**
 ```bash
-java -jar target/metrics-light-1.0.0.jar -c "curl http://httpbin.org/get" -u 10 -t 2 -d 30
+# Create curl.txt file
+echo "curl http://httpbin.org/get" > curl.txt
+
+# Run load test
+java -jar target/metrics-light-1.0.0.jar -u 10 -t 2 -d 30
 ```
 
 **POST request with headers and body:**
 ```bash
-java -jar target/metrics-light-1.0.0.jar -c "curl -X POST http://httpbin.org/post -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'" -u 50 -t 5 -d 60
+# Create curl.txt file
+echo "curl -X POST http://httpbin.org/post -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'" > curl.txt
+
+# Run load test
+java -jar target/metrics-light-1.0.0.jar -u 50 -t 5 -d 60
 ```
 
-**Request with correlation ID (will be auto-generated for each request):**
+**Request with UUID token (will be auto-generated for each request):**
 ```bash
-java -jar target/metrics-light-1.0.0.jar -c "curl -X POST http://api.example.com/data -H 'one-data-correlation-id: original-value' -H 'Content-Type: application/json' -d '{\"data\":\"test\"}'" -u 20 -t 4 -d 60 -r 100
+# Create curl.txt file
+cat > curl.txt << 'EOF'
+curl -X POST http://api.example.com/data \
+  -H 'Correlation-ID: {uuid}' \
+  -H 'Content-Type: application/json' \
+  -d '{"requestId":"{uuid}","data":"test"}'
+EOF
+
+# Run load test
+java -jar target/metrics-light-1.0.0.jar -u 20 -t 4 -d 60 -r 100
 ```
 
 **Complex API test with authentication:**
 ```bash
-java -jar target/metrics-light-1.0.0.jar -c "curl -X PUT http://localhost:8080/api/users/123 -H 'Authorization: Bearer token123' -H 'Content-Type: application/json' -d '{\"name\":\"John\"}'" -u 25 -t 5 -d 120 -r 50
+# Create curl.txt file
+cat > curl.txt << 'EOF'
+curl -X PUT http://localhost:8080/api/users/123 \
+  -H 'Authorization: Bearer token123' \
+  -H 'Content-Type: application/json' \
+  -H 'Request-ID: {uuid}' \
+  -d '{"name":"John","sessionId":"{uuid}"}'
+EOF
+
+# Run load test
+java -jar target/metrics-light-1.0.0.jar -u 25 -t 5 -d 120 -r 50
 ```
 
 ## Sample Output
 
 ```
 Starting load test with configuration:
-  Curl Command: curl -X POST http://httpbin.org/post -H 'Content-Type: application/json' -d '{"key":"value"}'
+  Curl Command (from curl.txt): curl -X POST http://httpbin.org/post -H 'Content-Type: application/json' -d '{"key":"value"}'
   Users: 10
   Threads: 2
   Duration: 30 seconds
@@ -141,7 +192,7 @@ The application parses curl commands to extract:
 - **HTTP Method**: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
 - **Headers**: All `-H` or `--header` flags
 - **Request Body**: Data from `-d` or `--data` flags
-- **Special Correlation ID**: Automatically replaces `one-data-correlation-id` header values with `CSSLOADTEST{uuid}` where `{uuid}` is the first 6 characters of a generated UUID for each request
+- **UUID Token Replacement**: Automatically replaces `{uuid}` tokens anywhere in the curl command with `APPLOADID{uuid}` where `{uuid}` is the first 6 characters of a generated UUID for each request
 
 ## Configuration Guidelines
 
