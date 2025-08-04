@@ -56,9 +56,26 @@ Then run the load test:
 java -jar target/metrics-light-1.0.0.jar -u <users> -t <threads> -d <duration> [-r <delay>]
 ```
 
-### HTTPS with Untrusted Certificates
+### HTTPS Certificate Handling
 
-If your curl command uses HTTPS with self-signed or untrusted certificates (equivalent to `curl -k`), run with SSL bypass flags:
+#### Option 1: Use macOS Certificate Store (Recommended on macOS)
+
+Configure Java to use macOS's built-in certificate store (Keychain), which contains trusted certificates:
+
+```bash
+# Use macOS Keychain certificate store
+java -Djavax.net.ssl.trustStoreType=KeychainStore \
+     -jar target/metrics-light-1.0.0.jar -u <users> -t <threads> -d <duration>
+```
+
+This approach:
+- ✅ **Secure**: Uses macOS's trusted certificate authorities
+- ✅ **Automatic**: Works with certificates trusted by macOS/browsers
+- ✅ **No Manual Setup**: Leverages existing system trust store
+
+#### Option 2: Bypass SSL Validation (Use with Caution)
+
+If your curl command uses HTTPS with self-signed or untrusted certificates (equivalent to `curl -k`):
 
 ```bash
 java -Dcom.sun.net.ssl.checkRevocation=false \
@@ -66,6 +83,8 @@ java -Dcom.sun.net.ssl.checkRevocation=false \
      -Djdk.tls.disabledAlgorithms="" \
      -jar target/metrics-light-1.0.0.jar -u <users> -t <threads> -d <duration>
 ```
+
+⚠️ **Warning**: This bypasses all SSL certificate validation and should only be used for testing with known self-signed certificates.
 
 ### Parameters
 
@@ -141,7 +160,23 @@ EOF
 java -jar target/metrics-light-1.0.0.jar -u 25 -t 5 -d 120 -r 50
 ```
 
-**HTTPS with self-signed certificates:**
+**HTTPS with macOS certificate store (Recommended):**
+```bash
+# Create curl.txt file with HTTPS endpoint
+cat > curl.txt << 'EOF'
+curl -X POST https://api.github.com/user/repos \
+  -H 'Authorization: Bearer token123' \
+  -H 'Content-Type: application/json' \
+  -H 'Request-ID: {uuid}' \
+  -d '{"name":"test-repo","private":false}'
+EOF
+
+# Run using macOS Keychain (secure)
+java -Djavax.net.ssl.trustStoreType=KeychainStore \
+     -jar target/metrics-light-1.0.0.jar -u 10 -t 2 -d 60
+```
+
+**HTTPS with self-signed certificates (SSL bypass):**
 ```bash
 # Create curl.txt file with HTTPS endpoint
 cat > curl.txt << 'EOF'
