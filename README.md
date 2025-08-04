@@ -56,6 +56,17 @@ Then run the load test:
 java -jar target/metrics-light-1.0.0.jar -u <users> -t <threads> -d <duration> [-r <delay>]
 ```
 
+### HTTPS with Untrusted Certificates
+
+If your curl command uses HTTPS with self-signed or untrusted certificates (equivalent to `curl -k`), run with SSL bypass flags:
+
+```bash
+java -Dcom.sun.net.ssl.checkRevocation=false \
+     -Dtrust_all_cert=true \
+     -Djdk.tls.disabledAlgorithms="" \
+     -jar target/metrics-light-1.0.0.jar -u <users> -t <threads> -d <duration>
+```
+
 ### Parameters
 
 - `-u, --users`: Number of concurrent users (required)
@@ -128,6 +139,23 @@ EOF
 
 # Run load test
 java -jar target/metrics-light-1.0.0.jar -u 25 -t 5 -d 120 -r 50
+```
+
+**HTTPS with self-signed certificates:**
+```bash
+# Create curl.txt file with HTTPS endpoint
+cat > curl.txt << 'EOF'
+curl -X POST https://self-signed.example.com/api/data \
+  -H 'Content-Type: application/json' \
+  -H 'Request-ID: {uuid}' \
+  -d '{"data":"test","id":"{uuid}"}'
+EOF
+
+# Run with SSL bypass (equivalent to curl -k)
+java -Dcom.sun.net.ssl.checkRevocation=false \
+     -Dtrust_all_cert=true \
+     -Djdk.tls.disabledAlgorithms="" \
+     -jar target/metrics-light-1.0.0.jar -u 10 -t 2 -d 60
 ```
 
 ## Sample Output

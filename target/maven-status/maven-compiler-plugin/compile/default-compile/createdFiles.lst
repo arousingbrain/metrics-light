@@ -1,4 +1,5 @@
 com/metrics/light/HttpResponse.class
+com/metrics/light/HttpRequestSender$1.class
 com/metrics/light/HttpRequestSender.class
 com/metrics/light/LoadTestExecutor$LoadTestWorker.class
 com/metrics/light/LoadTestApp.class

@@ -150,7 +150,21 @@ public class LoadTestExecutor {
                             if (e.getCause() != null) {
                                 System.err.println("Caused by: " + e.getCause().getClass().getSimpleName() + ": " + e.getCause().getMessage());
                             }
+                            
+                            // Provide specific guidance for SSL certificate issues
+                            if (e.getMessage().contains("PKIX path") || e.getMessage().contains("certificate") || 
+                                e.getMessage().contains("SSL") || e.getMessage().contains("TLS")) {
+                                System.err.println("\n*** SSL CERTIFICATE ISSUE DETECTED ***");
+                                System.err.println("To bypass SSL certificate validation (similar to curl -k), restart with:");
+                                System.err.println("java -Dcom.sun.net.ssl.checkRevocation=false \\");
+                                System.err.println("     -Dtrust_all_cert=true \\");
+                                System.err.println("     -Djdk.tls.disabledAlgorithms=\"\" \\");
+                                System.err.println("     -jar target/metrics-light-1.0.0.jar [your parameters]");
+                                System.err.println();
+                            }
+                            
                             System.err.println("This typically indicates issues with:");
+                            System.err.println("  - SSL certificate validation (see above for bypass)");
                             System.err.println("  - Invalid URL in curl.txt");
                             System.err.println("  - Network connectivity problems");
                             System.err.println("  - Invalid curl command syntax");

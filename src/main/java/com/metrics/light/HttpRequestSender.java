@@ -10,6 +10,10 @@ import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.util.Timeout;
 import java.util.Map;
+import javax.net.ssl.*;
+import java.security.cert.X509Certificate;
+import java.security.NoSuchAlgorithmException;
+import java.security.KeyManagementException;
 
 /**
  * Handles HTTP request sending with connection pooling and timeout configuration.
@@ -18,6 +22,15 @@ public class HttpRequestSender {
     private final CloseableHttpClient httpClient;
     
     public HttpRequestSender() {
+        // Check if SSL bypass flags are set and configure accordingly
+        boolean sslBypassRequested = "false".equals(System.getProperty("com.sun.net.ssl.checkRevocation")) || 
+                                   "true".equals(System.getProperty("trust_all_cert"));
+        
+        if (sslBypassRequested) {
+            initializeSSLBypass();
+            System.out.println("SSL certificate validation bypass detected (similar to curl -k)");
+        }
+        
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectionRequestTimeout(Timeout.ofSeconds(10))
                 .setResponseTimeout(Timeout.ofSeconds(30))
@@ -31,6 +44,31 @@ public class HttpRequestSender {
                 .setDefaultRequestConfig(requestConfig)
                 .setConnectionManager(connectionManager)
                 .build();
+    }
+    
+    private void initializeSSLBypass() {
+        try {
+            // Create a trust manager that accepts all certificates
+            TrustManager[] trustAllCerts = new TrustManager[] {
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) { }
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) { }
+                }
+            };
+            
+            // Install the all-trusting trust manager
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            
+            // Create all-trusting host name verifier
+            HostnameVerifier allHostsValid = (hostname, session) -> true;
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+            
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            System.err.println("Warning: Could not configure SSL bypass: " + e.getMessage());
+        }
     }
     
     public HttpResponse sendRequest(String url) throws Exception {
