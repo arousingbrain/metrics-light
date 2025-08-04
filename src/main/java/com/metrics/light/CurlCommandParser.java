@@ -11,8 +11,8 @@ import java.util.regex.Pattern;
 public class CurlCommandParser {
     
     // Pattern for extracting URL from curl command (currently using manual parsing)
-    private static final Pattern METHOD_PATTERN = Pattern.compile("-X\\s+([A-Z]+)");
-    private static final Pattern HEADER_PATTERN = Pattern.compile("-H\\s+['\"]([^'\"]+)['\"]");
+    private static final Pattern METHOD_PATTERN = Pattern.compile("(?:-X|--request)\\s+([A-Z]+)");
+    private static final Pattern HEADER_PATTERN = Pattern.compile("(?:-H|--header)\\s+['\"]([^'\"]+)['\"]");
     private static final Pattern DATA_PATTERN = Pattern.compile("(?:-d|--data|--data-raw)\\s+(['\"])([^'\"]*(?:\\\\.[^'\"]*)*?)\\1");
     
     public static RequestDetails parse(String curlCommand) {
@@ -109,13 +109,14 @@ public class CurlCommandParser {
     
     private static String extractBody(String curlCommand) {
         // Try multiple patterns for different curl data flag formats
+        // Use DOTALL flag to handle multiline content
         String[] patterns = {
             "(?:-d|--data|--data-raw)\\s+'([^']*)'",      // Single quotes
             "(?:-d|--data|--data-raw)\\s+\"([^\"]*)\""     // Double quotes
         };
         
         for (String patternStr : patterns) {
-            Pattern pattern = Pattern.compile(patternStr);
+            Pattern pattern = Pattern.compile(patternStr, Pattern.DOTALL);
             Matcher matcher = pattern.matcher(curlCommand);
             if (matcher.find()) {
                 return matcher.group(1);
